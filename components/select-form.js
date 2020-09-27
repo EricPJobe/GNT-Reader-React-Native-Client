@@ -140,7 +140,6 @@ const SelectForm = ({navigation}) => {
             {bookModal}
             {chapterModal}
             {verseModal}
-            <View><Text>debug: {verseModalVisible.toString()}, {selectedChapterFrom.toString()}</Text></View>
 
             {/*<View><Text style={styles.titleText}>Select Text Range</Text></View>*/}
             <View>
