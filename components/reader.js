@@ -1,11 +1,12 @@
 import React, { useContext, useState } from 'react';
-import {StyleSheet, Text, View, Pressable, ScrollView} from 'react-native';
+import {StyleSheet, Text, View, Pressable, ScrollView, TouchableOpacity} from 'react-native';
 import ReaderContext from "../context";
 import {useNavigation} from "@react-navigation/native";
-import {useQuery} from "react-apollo";
-import {getWordsQuery} from "./queries";
+import { useQuery } from "react-apollo";
+import { getWordsQuery } from "./queries";
 import getPos from '../utils/pos';
 import getParsing from '../utils/parsing';
+import FlashcardModal from "./flashcard-modal";
 
 const Reader = ({navigation}) => {
     // const context = useContext(ReaderContext);
@@ -16,6 +17,7 @@ const Reader = ({navigation}) => {
         referenceFrom: '060101',
         referenceTo: '060102'
     }
+    const [flashcardModalVisible, setFlashcardModalVisible] = useState(false);
     const [morphInfo, setMorphInfo] = useState({
         word: '',
         lemma: '',
@@ -35,6 +37,12 @@ const Reader = ({navigation}) => {
             referenceTo: context.referenceTo
         }
     });
+
+    const flashcardModal = <FlashcardModal visible={flashcardModalVisible} word={morphInfo} onSelectLevel={() => onSelectLevel()} />;
+
+    const onSelectLevel = () => {
+        setFlashcardModalVisible(false);
+    }
 
     const onWordTouch = (e) => {
         console.log(e);
@@ -71,7 +79,6 @@ const Reader = ({navigation}) => {
             pos: partOfSpeech,
             parsing: parsingInfo
         });
-
     }
 
     if(data) {
@@ -83,12 +90,11 @@ const Reader = ({navigation}) => {
         console.log(sortedData);
         words = sortedData.map(word => (
             <View key={word.id}>
-                <Pressable onPress={() => onWordTouch(word)}>
+                <Pressable onLongPress={() => setFlashcardModalVisible(true)}  onPress={() => onWordTouch(word)} >
                     <Text style={styles.word}>{word.text}</Text>
                 </Pressable>
             </View>
         ));
-
     }
 
     if (loading) return <View><Text>Loading...</Text></View>;
@@ -111,7 +117,11 @@ const Reader = ({navigation}) => {
                     <Text style={styles.wordInfo}>{morphInfo.word} </Text>
                     <Text style={styles.lemmaInfo}>{morphInfo.lemma} </Text>
                     <Text>{morphInfo.pos} {morphInfo.parsing} </Text>
-                    <Text style={styles.glossInfo}>{morphInfo.gloss} </Text></View>
+                    <Text style={styles.glossInfo}>{morphInfo.gloss} </Text>
+                </View>
+            </View>
+            <View>
+                {flashcardModal}
             </View>
         </View>
     );
@@ -171,7 +181,7 @@ const styles = StyleSheet.create({
         padding: 5
     },
     inline: {
-        display: "inline"
+        display: "flex"
     },
     wordText: {
         padding: 5
