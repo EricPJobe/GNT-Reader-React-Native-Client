@@ -1,22 +1,49 @@
-import React, { useContext, useState } from 'react';
-import {StyleSheet, Text, View, Pressable, ScrollView, TouchableOpacity} from 'react-native';
-import ReaderContext from "../context";
-import {useNavigation} from "@react-navigation/native";
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { useQuery } from "react-apollo";
 import { getWordsQuery } from "./queries";
 import getPos from '../utils/pos';
 import getParsing from '../utils/parsing';
 import FlashcardModal from "./flashcard-modal";
+import { FontAwesome5 } from '@expo/vector-icons';
+import ReferenceModal from "./reference-modal";
 
-const Reader = ({navigation}) => {
-    // const context = useContext(ReaderContext);
+const Reader = ({route, navigation}) => {
+
+    console.log("Params: ")
+    console.log(route.params);
+
     let sortedData = [];
     let words;
-    const context = {
-        bookName: 'Romans',
+
+    const [references, setReferences] = useState({
         referenceFrom: '060101',
-        referenceTo: '060102'
-    }
+        referenceTo: '060132',
+        bookName: 'Romans'
+    });
+
+    const {loading, error, data } = useQuery(getWordsQuery, {
+        variables: {
+            referenceFrom: references.referenceFrom,
+            referenceTo: references.referenceTo
+        }
+    });
+
+    useEffect(() => {
+        if(route.params) {
+            let { selectedReferenceFrom, selectedReferenceTo, selectedBookName } = route.params
+            console.log(selectedBookName);
+
+            setReferences({
+                referenceFrom: selectedReferenceFrom,
+                referenceTo: selectedReferenceTo,
+                bookName: selectedBookName
+            });
+        }
+
+        console.log("useEffect");
+    }, [route.params])
+
     const [flashcardModalVisible, setFlashcardModalVisible] = useState(false);
     const [morphInfo, setMorphInfo] = useState({
         word: '',
@@ -25,23 +52,21 @@ const Reader = ({navigation}) => {
         pos: '',
         parsing: ''
     });
-    const bookName = context.bookName;
-    const chapterFrom = context.referenceFrom.slice(2,4).replace('0', '');
-    const chapterTo = context.referenceFrom.slice(4).replace('0', '');
-    const verseFrom = context.referenceTo.slice(2,4).replace('0', '');
-    const verseTo = context.referenceTo.slice(4).replace('0', '');
 
-    const {loading, error, data } = useQuery(getWordsQuery, {
-        variables: {
-            referenceFrom: context.referenceFrom,
-            referenceTo: context.referenceTo
-        }
-    });
+    const bookName = references.bookName;
+    const chapterFrom = references.referenceFrom.slice(2,4).replace('0', '');
+    const chapterTo = references.referenceFrom.slice(4).replace('0', '');
+    const verseFrom = references.referenceTo.slice(2,4).replace('0', '');
+    const verseTo = references.referenceTo.slice(4).replace('0', '');
 
     const flashcardModal = <FlashcardModal visible={flashcardModalVisible} word={morphInfo} onSelectLevel={() => onSelectLevel()} />;
 
     const onSelectLevel = () => {
         setFlashcardModalVisible(false);
+    }
+
+    const openModel = () => {
+        navigation.navigate('References');
     }
 
     const onWordTouch = (e) => {
@@ -82,15 +107,15 @@ const Reader = ({navigation}) => {
     }
 
     if(data) {
-        console.log(data.words);
+        // console.log(data.words);
         sortedData = [... data.words];
         sortedData.sort((a,b) => {
             return a.id - b.id
         });
-        console.log(sortedData);
+        // console.log(sortedData);
         words = sortedData.map(word => (
             <View key={word.id}>
-                <Pressable onLongPress={() => setFlashcardModalVisible(true)}  onPress={() => onWordTouch(word)} >
+                <Pressable onLongPress={() => setFlashcardModalVisible(true)}  onPressIn={() => onWordTouch(word)} >
                     <Text style={styles.word}>{word.text}</Text>
                 </Pressable>
             </View>
@@ -103,6 +128,14 @@ const Reader = ({navigation}) => {
     return (
 
         <View style={styles.container}>
+            <View style={styles.topBarContainer}>
+                <Pressable onPress={() => openModel()}>
+                    <FontAwesome5 name="list" size={24} color={"white"} />
+                </Pressable>
+
+                <Text style={styles.topBarText}>Greek New Testament Reader</Text>
+                <View><Text> </Text></View>
+            </View>
             <View style={styles.titleContainer}>
                 <Text style={styles.titleText}>{bookName} {chapterFrom}:{verseFrom} - {chapterTo}:{verseTo}</Text>
             </View>
@@ -112,17 +145,18 @@ const Reader = ({navigation}) => {
                 </ScrollView>
             </View>
 
-            <View style={styles.infoBoxContainer}>
+            <ScrollView style={styles.infoBoxContainer}>
                 <View style={styles.inline}>
                     <Text style={styles.wordInfo}>{morphInfo.word} </Text>
                     <Text style={styles.lemmaInfo}>{morphInfo.lemma} </Text>
                     <Text>{morphInfo.pos} {morphInfo.parsing} </Text>
                     <Text style={styles.glossInfo}>{morphInfo.gloss} </Text>
                 </View>
-            </View>
+            </ScrollView>
             <View>
                 {flashcardModal}
             </View>
+
         </View>
     );
 }
@@ -139,10 +173,11 @@ const styles = StyleSheet.create({
        flex: 1,
        alignItems: "center",
        justifyContent: "center",
+       marginTop: 20
     },
     titleText: {
         fontWeight: "bold",
-        fontSize: 30,
+        fontSize: 20,
         color: "#1d78c1"
     },
     viewContainer: {
@@ -159,10 +194,11 @@ const styles = StyleSheet.create({
         flex: 1,
         borderStyle: "solid",
         borderWidth: 1,
-        borderColor: "#CCCCCC",
+        borderColor: "#DDDDDD",
         borderRadius: 10,
         margin: 20,
-        padding: 20
+        padding: 20,
+        overflow: "scroll"
     },
     wordInfo: {
         fontSize: 15
@@ -185,12 +221,22 @@ const styles = StyleSheet.create({
     },
     wordText: {
         padding: 5
+    },
+    topBarContainer: {
+        backgroundColor: "#1d78c1",
+        display: "flex",
+        flexDirection: "row",
+        paddingTop: 50,
+        justifyContent: "space-between",
+        height: 100,
+        width: "100%",
+        padding: 20
+    },
+    topBarText: {
+        color: "white",
+        fontWeight: "bold",
+        fontSize: 20
     }
 });
-
-// export default function(props) {
-//     const navigation = useNavigation();
-//     return <Reader {...props} navigation={navigation} />
-// }
 
 export default Reader;

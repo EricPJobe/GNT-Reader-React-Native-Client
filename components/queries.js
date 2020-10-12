@@ -8,7 +8,7 @@ export const getBooksQuery = gql`
             numChapters
         }
     }
-`
+`;
 
 export const getVersesQuery = gql`
     query GetVerses($bookNumber: Int, $chapterNumber: Int) {
@@ -16,7 +16,7 @@ export const getVersesQuery = gql`
             numVerses
         }
     }
-`
+`;
 
 export const getWordsQuery = gql`
     query GetWords($referenceFrom: String, $referenceTo: String) {
@@ -32,7 +32,7 @@ export const getWordsQuery = gql`
             gloss
         }
     }
-`
+`;
 
 export const createFlashcardMutation = gql`
     mutation CreateFlashcard($pos: String, $parsing: String, $word: String, $lemma: String, $gloss: String, $isActive: Boolean, $levelLearned: Int) {
@@ -53,17 +53,15 @@ export const createFlashcardMutation = gql`
             }
         }
     }
-`
-export const UpdateFlashcard = gql`
-    mutation UpdateFlashcard($pos: String, $parsing: String, $word: String, $lemma: String, $gloss: String, $isActive: Boolean, $levelLearned: Int) {
-        updateFlashcard(input: {
-            pos: $pos,
-            parsing: $parsing,
-            word: $word,
-            lemma: $lemma,
-            gloss: $gloss,
-            isActive: $isActive,
-            levelLearned: $levelLearned
+`;
+
+export const updateFlashcardMutation = gql`
+    mutation UpdateFlashcard($id: ID!, $isActive: Boolean, $levelLearned: Int) {
+        updateFlashcard(
+            input: {
+                id: $id,
+                isActive: $isActive,
+                levelLearned: $levelLearned
         }) {
             errors {
                 message
@@ -73,15 +71,30 @@ export const UpdateFlashcard = gql`
             }
         }
     } 
-`
+`;
 
-export const DeleteFlashcard = gql`
-    mutation DeleteFlashcard {
-        deleteFlashcard(id: 3) {
+export const deleteFlashcardMutation = gql`
+    mutation DeleteFlashcard($id: ID) {
+        deleteFlashcard(id:$id) {
             errors {
                 message
             }
             deletedFlashcardId
         }
     }
-`
+`;
+
+export const getFlashcards = gql`
+    query GetFlashcards {
+        flashcards {
+            id
+            pos
+            parsing
+            word
+            lemma
+            gloss
+            isActive
+            levelLearned
+        }
+    }
+`;

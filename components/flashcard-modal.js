@@ -1,10 +1,8 @@
-import React, {useState} from "react";
-import { Modal, StyleSheet, View, Text, TouchableWithoutFeedback } from "react-native";
+import React, {useState, useEffect} from "react";
+import {Modal, StyleSheet, View, Text, TouchableWithoutFeedback, TouchableHighlight} from "react-native";
 import {useMutation} from "react-apollo";
 import {createFlashcardMutation} from "./queries";
-// import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
-// import { faStar } from "@fortawesome/free-solid-svg-icons";
-// import { faStar as outlineStar } from "@fortawesome/free-regular-svg-icons";
+import { FontAwesome } from '@expo/vector-icons';
 
 const FlashcardModal = (props) => {
     const [stars, setStars] = useState(
@@ -16,10 +14,19 @@ const FlashcardModal = (props) => {
             {name: "star5", level: 5, isFilled: false},
         ]
     );
+    console.log(props);
+
+    useEffect(() => {
+        console.log("useEffect");
+        stars.forEach(star => star.isFilled = false);
+        const newStars = [...stars];
+        setStars(newStars);
+    }, [props]);
 
     const [createFlashcard, {mutationData}] = useMutation(createFlashcardMutation);
 
     const onStarPress = (star) => {
+        stars.forEach(star => star.isFilled = false);
         if(!star.isFilled) {
             stars.map(st => {
                 if(st.level <= star.level)
@@ -30,6 +37,15 @@ const FlashcardModal = (props) => {
           //  console.log(newStars);
             setStars(newStars);
         }
+    }
+
+    const onSubmit = () => {
+        let level = 0;
+        stars.forEach(star => {
+            if(star.isFilled)
+                level = star.level;
+        });
+        console.log(props);
         createFlashcard({
             variables: {
                 pos: props.word.pos,
@@ -38,7 +54,7 @@ const FlashcardModal = (props) => {
                 lemma: props.word.lemma,
                 gloss: props.word.gloss,
                 isActive: true,
-                levelLearned: star.level
+                levelLearned: level
             }
         })
         props.onSelectLevel();
@@ -64,21 +80,24 @@ const FlashcardModal = (props) => {
                                     if(!star.isFilled) {
                                         return (
                                             <TouchableWithoutFeedback key={star.level} onPress={() => onStarPress(star)} style={styles.star}>
-                                                {/*{<FontAwesomeIcon icon={faStar} size={30} color={"#1d78c1"}/>}*/}
-                                                <Text>U</Text>
+                                                <FontAwesome name="star-o" size={30} color="#1d78c1" />
                                             </TouchableWithoutFeedback>
                                         )
                                     }
                                     else {
                                         return (
                                             <TouchableWithoutFeedback key={star.level} onPress={() => onStarPress(star)} style={styles.star}>
-                                                {/*<FontAwesomeIcon icon={outlineStar} size={30} color={"#1d78c1"} />*/}
-                                                <Text>F</Text>
+                                                <FontAwesome name="star" size={30} color="#1d78c1" />
                                             </TouchableWithoutFeedback>
                                         )
                                     }
                                 })
                             }
+                        </View>
+                        <View style={styles.submitContainer}>
+                            <TouchableHighlight style={styles.submit} onPress={() => onSubmit()}>
+                                <View><Text style={styles.touchableText}>Create Flashcard</Text></View>
+                            </TouchableHighlight>
                         </View>
                     </View>
                 </View>
@@ -94,10 +113,11 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     modalView: {
-        width: 300,
+        width: "90%",
         height: 300,
         marginVertical: 20,
         marginHorizontal: 0,
+        padding: 10,
         backgroundColor: "white",
         borderWidth: 0,
         borderColor: 'transparent',
@@ -126,11 +146,31 @@ const styles = StyleSheet.create({
         display: "flex",
         flexDirection: "row",
         justifyContent: "space-evenly",
+        alignItems: "center",
         flex: 1
     },
     star: {
         flex: 1,
         padding: 20
+    },
+    submitContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center"
+    },
+    submit: {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: 60,
+        width: 150,
+        margin: 10,
+        backgroundColor: "#1d78c1",
+        borderRadius: 10,
+    },
+    touchableText: {
+        color: "white",
+        fontWeight: "bold"
     }
 });
 
